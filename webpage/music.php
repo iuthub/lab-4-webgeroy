@@ -1,14 +1,43 @@
 <?php
   $play_list = array();
   $is_playlist = FALSE;
-  if($_REQUEST){
+  $music_list = array();
+  if(isset($_REQUEST["playlist"])){
     $playlist = $_REQUEST["playlist"];
-    $music_list = file("songs/$playlist");
+    $music_tmp_list = file("songs/$playlist");
+    foreach ($music_tmp_list as $music){
+      if($music[0] != "#"){
+        $music_list[] = $music;
+      }
+    }
     $is_playlist = TRUE;
   }
   else{
     $music_list = glob('songs/*.mp3');
     $play_list = glob('songs/*.txt');
+  }
+  if(isset($_REQUEST["shuffle"])){
+    if($_REQUEST["shuffle"] == "on"){
+      shuffle($music_list);
+    }
+  }
+  if(isset($_REQUEST["bysize"]) and !$is_playlist){
+    if($_REQUEST["bysize"] == "on"){
+      $music_list_tmp = array();
+      for($i = 0; $i < count($music_list); $i++){
+        $largest = $music_list[0];
+        $index = 0;
+        for($j=1; $j < count($music_list); $j++){
+          if(filesize($music_list[$j]) > filesize($largest)){
+            $largest = $music_list[$j];
+            $index = $j;
+          }
+        }
+        \array_splice($music_list, $index, 1);
+        $music_list_tmp[] = $largest;
+      }
+      $music_list = $music_list_tmp;
+    }
   }
   function fileSizeConverter($bytes){
     $bytes = floatval($bytes);
@@ -79,7 +108,7 @@
         <?php
         for($i=0; $i<count($play_list); $i++){?>
           <li class="playlistitem">
-  					<a href="songs/<?=$play_list[$i]?>"><?= basename($play_list[$i])?></a>
+  					<a href="<?= "music.php?playlist=".basename($play_list[$i]) ?>"><?= basename($play_list[$i])?></a>
   				</li>
         <?php } ?>
 			</ul>
